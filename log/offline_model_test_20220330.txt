@@ -1,0 +1,14 @@
+2022-03-30 16:59:22,650 - root - INFO - ###### 0 th round complete!
+2022-03-30 17:19:37,276 - root - INFO - ###### 100000 th round complete!
+2022-03-30 17:26:37,846 - root - INFO - ###### 0 th round complete!
+2022-03-30 17:30:37,947 - root - INFO - ###### 0 th round complete!
+2022-03-30 17:44:34,295 - root - INFO - ###### 100000 th round complete!
+2022-03-30 17:59:06,861 - root - INFO - ###### 200000 th round complete!
+2022-03-30 18:04:11,534 - root - INFO - ###### 0 th round complete!
+2022-03-30 18:08:24,490 - root - INFO - ###### 0 th round complete!
+2022-03-30 18:13:57,155 - root - INFO - ###### 0 th round complete!
+2022-03-30 18:18:26,983 - root - INFO - ###### 0 th round complete!
+2022-03-30 18:21:37,074 - root - INFO - ###### 0 th round complete!
+2022-03-30 18:59:07,005 - root - INFO - ###### 0 th round complete!
+2022-03-30 18:59:16,361 - root - INFO - ###### 100000 th round complete!
+2022-03-30 18:59:44,876 - root - INFO - ###### 0 th round complete!
