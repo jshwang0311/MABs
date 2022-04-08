@@ -14,8 +14,8 @@ import pickle
 
 
 import dataset
-#files = ("../data/R6/ydata-fp-td-clicks-v1_0.20090501","../data/R6/ydata-fp-td-clicks-v1_0.20090503")
-files = ("../data/R6/ydata-fp-td-clicks-v1_0.20090501","../data/R6/ydata-fp-td-clicks-v1_0.20090502","../data/R6/ydata-fp-td-clicks-v1_0.20090503","../data/R6/ydata-fp-td-clicks-v1_0.20090504","../data/R6/ydata-fp-td-clicks-v1_0.20090505","../data/R6/ydata-fp-td-clicks-v1_0.20090506","../data/R6/ydata-fp-td-clicks-v1_0.20090507","../data/R6/ydata-fp-td-clicks-v1_0.20090508","../data/R6/ydata-fp-td-clicks-v1_0.20090509","../data/R6/ydata-fp-td-clicks-v1_0.20090510")
+#files = ("../data/R6/ydata-fp-td-clicks-v1_0.20090501","../data/R6/ydata-fp-td-clicks-v1_0.20090502","../data/R6/ydata-fp-td-clicks-v1_0.20090503","../data/R6/ydata-fp-td-clicks-v1_0.20090504","../data/R6/ydata-fp-td-clicks-v1_0.20090505","../data/R6/ydata-fp-td-clicks-v1_0.20090506","../data/R6/ydata-fp-td-clicks-v1_0.20090507","../data/R6/ydata-fp-td-clicks-v1_0.20090508","../data/R6/ydata-fp-td-clicks-v1_0.20090509","../data/R6/ydata-fp-td-clicks-v1_0.20090510")
+files = ("../data/R6/ydata-fp-td-clicks-v1_0.20090501","../data/R6/ydata-fp-td-clicks-v1_0.20090502","../data/R6/ydata-fp-td-clicks-v1_0.20090503","../data/R6/ydata-fp-td-clicks-v1_0.20090504","../data/R6/ydata-fp-td-clicks-v1_0.20090505")
 dataset.get_yahoo_events(files)
 
 
@@ -83,8 +83,6 @@ for hyper_param in hyper_param_list:
 trial = np.repeat(0, len(algorithms))
 cumulative_reward_list = [[]] * (len(algorithms))
 mean_reward_list = [[]] * (len(algorithms))
-univ_offer_list = []
-local_offer_list = []
 for t, event in enumerate(events):
     # Get context
     user = event[2]
@@ -97,19 +95,6 @@ for t, event in enumerate(events):
     # Get Reward
     reward = event[1]
     
-    # Get data to make oracle model.
-    univ_offer_list.append(reward)
-    if t == 0:
-        local_offer = [reward]
-        bf_pool_idx = pool_idx
-    else:
-        if pool_idx == bf_pool_idx:
-            local_offer.append(reward)
-        else:
-            local_offer_list.append(local_offer)
-            local_offer = [reward]
-            bf_pool_idx = pool_idx
-
     for alg_idx in range(len(algorithms)):
         # temporary implement.
         ## recent alg
@@ -154,17 +139,99 @@ for i in range(len(mean_reward_list)):
     else:
         minimum_round = min(minimum_round, len(mean_reward_list[i]))
         
-        
-#### plot Mean Reward
+
+alg_cate_list = []
+alg_list = []
 for i in range(len(mean_reward_list)):
     model = algorithms[i]
-    plt.plot(mean_reward_list[i][:minimum_round], label="{}".format(model.algorithm))
+    alg_list.append(model.algorithm)
+    if i == 0:
+        bf_alg_cate = model.algorithm.split('_')[0]
+        alg_cate_list.append(bf_alg_cate)
+    else:
+        if bf_alg_cate != model.algorithm.split('_')[0]:
+            bf_alg_cate = model.algorithm.split('_')[0]
+            alg_cate_list.append(bf_alg_cate)
     
     
+#### plot Mean Reward
+best_alg_cate_idx = []
+for alg_cate_idx in range(len(alg_cate_list)):
+    alg_cate = alg_cate_list[alg_cate_idx]
+    best_perf = 0.
+    alg_cate_idx = 0
+    for i in range(len(mean_reward_list)):
+        model = algorithms[i]
+        if alg_cate == model.algorithm.split('_')[0]:
+            plt.plot(mean_reward_list[i][:minimum_round], label="{}".format(model.algorithm))
+            if best_perf < mean_reward_list[i][minimum_round-1]:
+                best_perf = mean_reward_list[i][minimum_round-1]
+                alg_cate_idx = i
+    best_alg_cate_idx.append(alg_cate_idx)
+    plt.title("Mean Reward for each model")
+    plt.xlabel("T")
+    plt.ylabel("Mean Reward")
+    #plt.legend(loc='best', bbox_to_anchor=(1, 0.5))
+    #plt.show()
+    plt.savefig(os.path.join('Results','%s_MeanReward%s.png'%(alg_cate, time_mark)))
+
+    
+    
+univ_offer_list = []
+local_offer_list = []
+for t, event in enumerate(events):
+    # Get context
+    user = event[2]
+    pool_idx = event[3]
+    pool_item_features = item_features[pool_idx,:]
+    
+    # Return offering
+    displayed = event[0]
+    offered = pool_idx[displayed]
+    
+    # Get data to make oracle model.
+    univ_offer_list.append(offered)
+    if t == 0:
+        local_offer = [offered]
+        bf_pool_idx = pool_idx
+    else:
+        if pool_idx == bf_pool_idx:
+            local_offer.append(offered)
+        else:
+            local_offer_list.append(local_offer)
+            local_offer = [offered]
+            bf_pool_idx = pool_idx
+            
+            
+univ_pd = pd.DataFrame({'offer' : univ_offer_list})
+one_top_offer = univ_pd.value_counts().index[0][0]
+univ_mean_reward = univ_pd.value_counts()[one_top_offer]/len(univ_offer_list)
+
+local_mean_reward_list = []
+for i in range(len(local_offer_list)):
+    local_pd = pd.DataFrame({'offer' : local_offer_list[i]})
+    one_top_offer = local_pd.value_counts().index[0][0]
+    local_mean_reward = local_pd.value_counts()[one_top_offer]/len(local_offer_list[i])
+    local_mean_reward_list.append(local_mean_reward)
+
+local_mean_reward = np.array(local_mean_reward_list).mean()
+
+
+
+for idx in best_alg_cate_idx:
+    model = algorithms[idx]
+    plt.plot(mean_reward_list[idx][:minimum_round], label="{}".format(model.algorithm.split('_')[0]))
+    
+plt.plot(np.repeat(univ_mean_reward,minimum_round), label = "univ_oracle")
+plt.plot(np.repeat(local_mean_reward,minimum_round), label = "local_oracle")
 plt.title("Mean Reward for each model")
 plt.xlabel("T")
 plt.ylabel("Mean Reward")
 plt.legend(loc='best', bbox_to_anchor=(1, 0.5))
-#plt.savefig(os.path.join('Results','MeanRewardTotal%s.png'%(time_mark)))
-plt.show()
-    
+plt.savefig(os.path.join('Results','Best_MeanReward%s.png'%(time_mark)))
+
+
+
+import dill                           
+filename = os.path.join('Results','globalsave.pkl')
+dill.dump_session(filename)

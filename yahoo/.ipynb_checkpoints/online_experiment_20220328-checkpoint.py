@@ -53,23 +53,34 @@ hyper_param = 0.1
 
 # Declare algorithm
 algorithms = [
-    Ucb1(hyper_param, n_arms, False),
-    ThompsonSampling(n_arms, False),
-    LinUCB(n_user_features, n_item_features, hyper_param, "user", False),
-    LinearContextualThompsonSampling(n_user_features, n_item_features, hyper_param, "user", False),
-    Disjoint_LinUCB(n_user_features, n_item_features, n_arms, hyper_param, "user", False),
-    LinUCB(n_user_features, n_item_features, hyper_param, "both", False),
-    LinearContextualThompsonSampling(n_user_features, n_item_features, hyper_param, "both", False),
-    Disjoint_LinUCB(n_user_features, n_item_features, n_arms, hyper_param, "both", False),
-    Ucb1(hyper_param, n_arms, True),
-    ThompsonSampling(n_arms, True),
-    LinUCB(n_user_features, n_item_features, hyper_param, "user", True),
-    LinearContextualThompsonSampling(n_user_features, n_item_features, hyper_param, "user", True),
-    Disjoint_LinUCB(n_user_features, n_item_features, n_arms, hyper_param, "user", True),
-    LinUCB(n_user_features, n_item_features, hyper_param, "both", True),
-    LinearContextualThompsonSampling(n_user_features, n_item_features, hyper_param, "both", True),
-    Disjoint_LinUCB(n_user_features, n_item_features, n_arms, hyper_param, "both", True)
+    ThompsonSampling(n_arms, True)
 ]
+for hyper_param in hyper_param_list:
+    algorithms.append(Ucb1(hyper_param, n_arms, True))
+
+for hyper_param in hyper_param_list:
+    algorithms.append(LinUCB(n_user_features, n_item_features, hyper_param, "user", True))
+    algorithms.append(LinUCB(n_user_features, n_item_features, hyper_param, "both", True))
+
+for hyper_param in hyper_param_list:
+    algorithms.append(LinearContextualThompsonSampling(n_user_features, n_item_features, hyper_param, "user", True))
+    algorithms.append(LinearContextualThompsonSampling(n_user_features, n_item_features, hyper_param, "both", True))
+
+for hyper_param in hyper_param_list:
+    algorithms.append(Disjoint_LinUCB(n_user_features, n_item_features, n_arms, hyper_param, "user", True))
+    algorithms.append(Disjoint_LinUCB(n_user_features, n_item_features, n_arms, hyper_param, "both", True))
+
+for hyper_param in hyper_param_list:
+    algorithms.append(Disjoint_LinTS(n_user_features, n_item_features, n_arms, hyper_param, "user", True))
+    algorithms.append(Disjoint_LinTS(n_user_features, n_item_features, n_arms, hyper_param, "both", True))
+
+for hyper_param in hyper_param_list:
+    algorithms.append(Disjoint_LinTS(n_user_features, n_item_features, n_arms, hyper_param, "user", True))
+    algorithms.append(Disjoint_LinTS(n_user_features, n_item_features, n_arms, hyper_param, "both", True))
+
+for hyper_param in hyper_param_list:
+    algorithms.append(Semiparam_LinTS(n_user_features, n_item_features, hyper_param, "user", True))
+    algorithms.append(Semiparam_LinTS(n_user_features, n_item_features, hyper_param, "both", True))
 
 
 save_model_dir = 'model'
@@ -77,7 +88,9 @@ if not os.path.exists(save_model_dir):
     os.makedirs(save_model_dir)
 
 # Define online module
-online = Online_module(save_model_dir, algorithms)    
+online_list = []
+for i in range(len(algorithms)):
+    online_list.append(Online_module(save_model_dir, algorithms[i]))
 
 # Simulate
 for t, event in enumerate(events):
@@ -87,15 +100,18 @@ for t, event in enumerate(events):
     pool_item_features = item_features[pool_idx,:]
     
     # Return offering
-    displayed = event[0]
-    offered = pool_idx[displayed]
+    pool_offered = event[0]
+    offered = pool_idx[pool_offered]
     # Get Reward
     reward = event[1]
     
-    # Call online module
-    online.evaluate(user, offered, reward, pool_idx, pool_item_features)
-    online.learn(user, offered, reward, pool_idx, pool_item_features)
+    for i in range(len(online_list)):
+        # Call online module
+        online_list[i].evaluate(user, pool_offered, reward, pool_idx, pool_item_features)
+        online_list[i].learn(user, pool_offered, reward, pool_idx, pool_item_features)
 
+
+        
 
 
 # save and load binary model

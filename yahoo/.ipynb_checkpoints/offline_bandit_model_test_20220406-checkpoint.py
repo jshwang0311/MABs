@@ -51,32 +51,84 @@ n_item_features = item_features.shape[1]
 hyper_param_list = [0.01, 0.05, 0.1, 0.3, 0.5, 0.7]
 
 
+'''
+####Debug
+for t, event in enumerate(events):
+    # Get context
+    user = event[2]
+    pool_idx = event[3]
+    pool_item_features = item_features[pool_idx,:]
+    
+    # Return offering
+    displayed = event[0]
+    offered = pool_idx[displayed]
+    # Get Reward
+    reward = event[1]
+    break
+    
+
+alg2 = Semiparam_LinTS(n_user_features, n_item_features, 0.1, "both", True)
+self = alg2
+
+a = offered  # displayed article's index
+mu_hat = (self.B_inv @ self.y).reshape(-1)
+var = (self.v ** 2) * self.B_inv
+mu_tilde=np.random.multivariate_normal(mu_hat,var,1000)
+
+n_pool = len(pool_idx)
+user = np.array([user] * n_pool)
+if self.context == 1:
+    b_T = user
+else:
+    b_T = np.hstack((user, pool_item_features))
+
+p = b_T @ mu_tilde.T
+ac_mc = list(np.argmax(p,axis = 0))
+pi_est=np.array([float(ac_mc.count(n))/len(ac_mc) for n in range(len(pool_idx))])
+b_mean=np.dot(b_T.T,pi_est)
+
+self.B += 2* (b_T[a,:] - b_mean).reshape(-1,1) @ (b_T[a,:] - b_mean).reshape(-1,1).T
+self.B += 2* ((b_T.T @ np.diag(pi_est)) @ b_T) - 2*(b_mean.reshape(-1,1) @ b_mean.reshape(-1,1).T)
+self.y += 2* reward* (b_T[a,:] - b_mean).reshape(-1,1)
+
+B=B+2*np.outer(Bs_list[t][action]-b_mean,Bs_list[t][action]-b_mean)
+B=B+2*np.dot(np.dot(np.transpose(Bs_list[t]),np.diag(pi_est)),Bs_list[t])-2*np.outer(b_mean,b_mean)
+y=y+4*(Bs_list[t][action]-b_mean)*(-intercept+vs[t]+errors[t][action]+np.dot(Bs_list[t][action],mu))
+
+##################
+'''
+
+
 # Declare algorithm
 algorithms = [
-    ThompsonSampling(n_arms, False),
     ThompsonSampling(n_arms, True)
 ]
 for hyper_param in hyper_param_list:
-    algorithms.append(Ucb1(hyper_param, n_arms, False))
     algorithms.append(Ucb1(hyper_param, n_arms, True))
 
 for hyper_param in hyper_param_list:
-    algorithms.append(LinUCB(n_user_features, n_item_features, hyper_param, "user", False))
-    algorithms.append(LinUCB(n_user_features, n_item_features, hyper_param, "both", False))
     algorithms.append(LinUCB(n_user_features, n_item_features, hyper_param, "user", True))
     algorithms.append(LinUCB(n_user_features, n_item_features, hyper_param, "both", True))
 
 for hyper_param in hyper_param_list:
-    algorithms.append(LinearContextualThompsonSampling(n_user_features, n_item_features, hyper_param, "user", False))
-    algorithms.append(LinearContextualThompsonSampling(n_user_features, n_item_features, hyper_param, "both", False))
     algorithms.append(LinearContextualThompsonSampling(n_user_features, n_item_features, hyper_param, "user", True))
     algorithms.append(LinearContextualThompsonSampling(n_user_features, n_item_features, hyper_param, "both", True))
 
 for hyper_param in hyper_param_list:
-    algorithms.append(Disjoint_LinUCB(n_user_features, n_item_features, n_arms, hyper_param, "user", False))
-    algorithms.append(Disjoint_LinUCB(n_user_features, n_item_features, n_arms, hyper_param, "both", False))
     algorithms.append(Disjoint_LinUCB(n_user_features, n_item_features, n_arms, hyper_param, "user", True))
     algorithms.append(Disjoint_LinUCB(n_user_features, n_item_features, n_arms, hyper_param, "both", True))
+
+for hyper_param in hyper_param_list:
+    algorithms.append(Disjoint_LinTS(n_user_features, n_item_features, n_arms, hyper_param, "user", True))
+    algorithms.append(Disjoint_LinTS(n_user_features, n_item_features, n_arms, hyper_param, "both", True))
+
+for hyper_param in hyper_param_list:
+    algorithms.append(Disjoint_LinTS(n_user_features, n_item_features, n_arms, hyper_param, "user", True))
+    algorithms.append(Disjoint_LinTS(n_user_features, n_item_features, n_arms, hyper_param, "both", True))
+
+for hyper_param in hyper_param_list:
+    algorithms.append(Semiparam_LinTS(n_user_features, n_item_features, hyper_param, "user", True))
+    algorithms.append(Semiparam_LinTS(n_user_features, n_item_features, hyper_param, "both", True))
 
 
 
@@ -90,8 +142,8 @@ for t, event in enumerate(events):
     pool_item_features = item_features[pool_idx,:]
     
     # Return offering
-    displayed = event[0]
-    offered = pool_idx[displayed]
+    pool_offered = event[0]
+    offered = pool_idx[pool_offered]
     # Get Reward
     reward = event[1]
     
@@ -119,11 +171,11 @@ for t, event in enumerate(events):
                 cumulative_reward_list[alg_idx].append(cumulative_reward)
                 mean_reward_list[alg_idx].append(recent_mean_reward)
                         
-            algorithms[alg_idx].update(offered, reward, user, pool_idx, pool_item_features[chosen])
+            algorithms[alg_idx].update(pool_offered, reward, user, pool_idx, pool_item_features)
         else:
             if algorithms[alg_idx].update_option:
-                chosen = displayed
-                algorithms[alg_idx].update(offered, reward, user, pool_idx, pool_item_features[chosen])
+                chosen = pool_offered
+                algorithms[alg_idx].update(pool_offered, reward, user, pool_idx, pool_item_features)
                                 
     if t % 100000 == 0:
         logger.info('###### %d th round complete!' % (t))
@@ -232,6 +284,6 @@ plt.savefig(os.path.join('Results','Best_MeanReward%s.png'%(time_mark)))
 
 
 
-import dill                           
-filename = os.path.join('Results','globalsave.pkl')
-dill.dump_session(filename)
+#import dill                           
+#filename = os.path.join('Results','globalsave.pkl')
+#dill.dump_session(filename)
