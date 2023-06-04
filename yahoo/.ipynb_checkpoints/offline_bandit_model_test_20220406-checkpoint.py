@@ -11,6 +11,9 @@ import logging
 import datetime
 import pickle
 
+##0412 : debug semiparametric (modify git version)
+##0411 : debug semiparametric
+##0406 : add semiparametric + disjoint linTS
 
 
 import dataset
@@ -48,8 +51,8 @@ for t, event in enumerate(events):
 n_user_features = len(user)
 n_item_features = item_features.shape[1]
 ## hyper-param
-hyper_param_list = [0.01, 0.05, 0.1, 0.3, 0.5, 0.7]
-
+#hyper_param_list = [0.01, 0.05, 0.1, 0.3, 0.5, 0.7]
+hyper_param_list=[0.01,0.03,0.05,0.06,0.1,0.11,0.12,0.2]
 
 '''
 ####Debug
@@ -107,11 +110,11 @@ for hyper_param in hyper_param_list:
     algorithms.append(Ucb1(hyper_param, n_arms, True))
 
 for hyper_param in hyper_param_list:
-    algorithms.append(LinUCB(n_user_features, n_item_features, hyper_param, "user", True))
+    #algorithms.append(LinUCB(n_user_features, n_item_features, hyper_param, "user", True))
     algorithms.append(LinUCB(n_user_features, n_item_features, hyper_param, "both", True))
 
 for hyper_param in hyper_param_list:
-    algorithms.append(LinearContextualThompsonSampling(n_user_features, n_item_features, hyper_param, "user", True))
+    #algorithms.append(LinearContextualThompsonSampling(n_user_features, n_item_features, hyper_param, "user", True))
     algorithms.append(LinearContextualThompsonSampling(n_user_features, n_item_features, hyper_param, "both", True))
 
 for hyper_param in hyper_param_list:
@@ -122,13 +125,12 @@ for hyper_param in hyper_param_list:
     algorithms.append(Disjoint_LinTS(n_user_features, n_item_features, n_arms, hyper_param, "user", True))
     algorithms.append(Disjoint_LinTS(n_user_features, n_item_features, n_arms, hyper_param, "both", True))
 
-for hyper_param in hyper_param_list:
-    algorithms.append(Disjoint_LinTS(n_user_features, n_item_features, n_arms, hyper_param, "user", True))
-    algorithms.append(Disjoint_LinTS(n_user_features, n_item_features, n_arms, hyper_param, "both", True))
 
 for hyper_param in hyper_param_list:
-    algorithms.append(Semiparam_LinTS(n_user_features, n_item_features, hyper_param, "user", True))
-    algorithms.append(Semiparam_LinTS(n_user_features, n_item_features, hyper_param, "both", True))
+    #algorithms.append(Semiparam_LinTS(n_user_features, n_item_features, hyper_param, "user", True))
+    #algorithms.append(Semiparam_LinTS(n_user_features, n_item_features, hyper_param, "both", True))
+    algorithms.append(Semiparam_LinTS(n_user_features, n_item_features, hyper_param, "user", False))
+    algorithms.append(Semiparam_LinTS(n_user_features, n_item_features, hyper_param, "both", False))
 
 
 
@@ -226,6 +228,7 @@ for alg_cate_idx in range(len(alg_cate_list)):
     #plt.legend(loc='best', bbox_to_anchor=(1, 0.5))
     #plt.show()
     plt.savefig(os.path.join('Results','%s_MeanReward%s.png'%(alg_cate, time_mark)))
+    plt.show()
 
     
     
@@ -270,20 +273,52 @@ local_mean_reward = np.array(local_mean_reward_list).mean()
 
 
 
+from pylab import rcParams
+
+rcParams['figure.figsize'] = 25, 10
+
 for idx in best_alg_cate_idx:
     model = algorithms[idx]
-    plt.plot(mean_reward_list[idx][:minimum_round], label="{}".format(model.algorithm.split('_')[0]))
+    plt.plot(mean_reward_list[idx][:minimum_round], label="%s : %.5f" % (model.algorithm.split('_')[0], mean_reward_list[idx][minimum_round]))
     
-plt.plot(np.repeat(univ_mean_reward,minimum_round), label = "univ_oracle")
-plt.plot(np.repeat(local_mean_reward,minimum_round), label = "local_oracle")
+plt.plot(np.repeat(univ_mean_reward,minimum_round), label = "univ_oracle : %.5f" % (univ_mean_reward))
+plt.plot(np.repeat(local_mean_reward,minimum_round), label = "local_oracle : %.5f" % (local_mean_reward))
 plt.title("Mean Reward for each model")
 plt.xlabel("T")
 plt.ylabel("Mean Reward")
 plt.legend(loc='best', bbox_to_anchor=(1, 0.5))
 plt.savefig(os.path.join('Results','Best_MeanReward%s.png'%(time_mark)))
+plt.show()
 
 
 
-#import dill                           
-#filename = os.path.join('Results','globalsave.pkl')
-#dill.dump_session(filename)
+for idx in best_alg_cate_idx:
+    model = algorithms[idx]
+    print('%s recent mean reward : %.5f' % (model.algorithm.split('_')[0],mean_reward_list[idx][minimum_round]))
+
+    
+for idx in range(len(mean_reward_list)):
+    model = algorithms[idx]
+    print('%s recent mean reward : %.5f' % (model.algorithm,mean_reward_list[idx][minimum_round-1]))
+
+for idx in range(len(mean_reward_list)):
+    model = algorithms[idx]
+    print('%s recent mean reward : %.5f' % (model.algorithm,mean_reward_list[idx][len(mean_reward_list[idx])-1]))
+
+
+# Save mean reward
+mean_reward_list.append(local_mean_reward)
+mean_reward_list.append(univ_mean_reward)
+
+
+
+with open('Results/mean_reward_list_%s.pkl' % (time_mark), 'wb') as f:
+    pickle.dump(mean_reward_list, f)
+
+# Save MAB model
+with open('model/R6A_CMABs_%s.pkl' % (time_mark), 'wb') as f:
+    pickle.dump(algorithms, f)
+
+#with open('Results/R6A_CMABs_%s.pkl' % (time_mark), 'rb') as f:
+#    temp = pickle.load(f)
+    

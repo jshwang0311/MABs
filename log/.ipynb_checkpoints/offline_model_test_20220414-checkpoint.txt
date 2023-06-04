@@ -1,0 +1,13 @@
+2022-04-14 11:06:51,385 - root - INFO - ###### 0 th round complete!
+2022-04-14 13:15:52,688 - root - INFO - ###### 100000 th round complete!
+2022-04-14 15:24:26,420 - root - INFO - ###### 200000 th round complete!
+2022-04-14 17:33:27,612 - root - INFO - ###### 300000 th round complete!
+2022-04-14 19:43:25,179 - root - INFO - ###### 400000 th round complete!
+2022-04-14 21:53:16,255 - root - INFO - ###### 500000 th round complete!
+2022-04-15 00:03:05,382 - root - INFO - ###### 600000 th round complete!
+2022-04-15 02:13:40,030 - root - INFO - ###### 700000 th round complete!
+2022-04-15 04:22:51,679 - root - INFO - ###### 800000 th round complete!
+2022-04-15 06:33:47,475 - root - INFO - ###### 900000 th round complete!
+2022-04-15 08:44:36,699 - root - INFO - ###### 1000000 th round complete!
+2022-04-15 10:55:03,893 - root - INFO - ###### 1100000 th round complete!
+2022-04-15 13:06:31,637 - root - INFO - ###### 1200000 th round complete!

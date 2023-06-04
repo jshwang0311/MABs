@@ -1,0 +1,8 @@
+2022-08-19 22:10:15,801 - root - INFO - ###### 0 th round complete!
+2022-08-20 11:50:39,377 - root - INFO - ###### 100000 th round complete!
+2022-08-21 00:55:02,866 - root - INFO - ###### 200000 th round complete!
+2022-08-21 13:36:05,597 - root - INFO - ###### 300000 th round complete!
+2022-08-22 02:44:35,890 - root - INFO - ###### 400000 th round complete!
+2022-08-22 16:02:57,467 - root - INFO - ###### 500000 th round complete!
+2022-08-23 04:58:54,696 - root - INFO - ###### 600000 th round complete!
+2022-08-23 15:32:30,160 - root - INFO - ###### 700000 th round complete!
